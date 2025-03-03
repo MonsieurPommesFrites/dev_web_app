@@ -1,0 +1,693 @@
+/* Import font */
+@import url('https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+
+/* Base styles */
+html {
+    font-size: 18px;
+}
+
+body {
+    font-family: 'Source Sans 3';
+    margin: 0;
+}
+
+/* Layout Components */
+.content-wrapper {
+    min-height: 100vh;
+    width: 100vw;
+    /*background-image: linear-gradient(90deg, black, #71797E);*/
+    position: relative;
+}
+
+.content-container {
+    position: absolute;
+    top: 10vh;
+    left: 10vw;
+    width: 80vw;
+    height: 80vh;
+    background-color: white;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    display: flex;
+    flex-direction: row;
+    transition: all 0.3s ease;
+}
+
+/* Split view styles */
+.content-container.split-view {
+    display: flex;
+    flex-direction: row;
+}
+
+.content-section {
+    flex: 1;
+    height: 100%;
+    position: relative;
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.content-section.half-width {
+    flex: 0 0 50%;
+    border-right: 1px solid #ddd;
+}
+
+/* Drawing section styles */
+.drawing-section {
+    flex: 0 0 50%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background-color: #f8f8f8;
+    -webkit-user-select: none;
+    user-select: none;
+    touch-action: none; /* Disable browser touch actions */
+}
+
+.drawing-toolbar {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    border-bottom: 1px solid #ddd;
+    background-color: #f0f0f0;
+    gap: 12px;
+    flex-wrap: wrap;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+.drawing-tool-btn {
+    background-color: white;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 6px 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    touch-action: manipulation;
+    -webkit-touch-callout: none;
+}
+
+.drawing-tool-btn:hover {
+    background-color: #f0f0f0;
+}
+
+.drawing-tool-btn.active {
+    background-color: #e6f7ff;
+    border-color: #1890ff;
+    color: #1890ff;
+}
+
+.color-picker {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.color-btn {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 1px solid #ddd;
+    cursor: pointer;
+    transition: transform 0.2s;
+    touch-action: manipulation;
+    -webkit-touch-callout: none;
+}
+
+.color-btn:hover {
+    transform: scale(1.1);
+}
+
+.color-btn.active {
+    border: 2px solid white;
+    box-shadow: 0 0 0 2px #1890ff;
+}
+
+.pen-size {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.size-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+    background-color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    touch-action: manipulation;
+    -webkit-touch-callout: none;
+}
+
+.size-btn.active {
+    border-color: #1890ff;
+    background-color: #e6f7ff;
+}
+
+.size-indicator {
+    background-color: black;
+    border-radius: 50%;
+}
+
+.size-thin {
+    width: 4px;
+    height: 4px;
+}
+
+.size-medium {
+    width: 8px;
+    height: 8px;
+}
+
+.size-thick {
+    width: 12px;
+    height: 12px;
+}
+
+/* Page navigation styles */
+.page-navigation {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+}
+
+.page-nav-btn {
+    background-color: white;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 6px 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    touch-action: manipulation;
+    -webkit-touch-callout: none;
+}
+
+.page-nav-btn:hover:not(:disabled) {
+    background-color: #f0f0f0;
+}
+
+.page-nav-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.page-indicator {
+    font-size: 14px;
+    padding: 0 5px;
+    color: #555;
+    min-width: 40px;
+    text-align: center;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+    touch-action: none;
+}
+
+.drawing-area {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+}
+
+.drawing-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    cursor: crosshair;
+    background-color: white;
+    touch-action: none;
+    -ms-touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: rgba(0,0,0,0);
+}
+
+/* Ensure proper rendering on high-DPI displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    .drawing-canvas {
+        image-rendering: -webkit-optimize-contrast;
+        image-rendering: crisp-edges;
+    }
+}
+
+/* Media Container Styles */
+.media-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Center images and videos */
+.media-container:has(img), 
+.media-container:has(video) {
+    align-items: center;
+    justify-content: center;
+}
+
+/* Left align text content */
+.media-container:not(:has(img)):not(:has(video)) {
+    align-items: flex-start;
+    justify-content: flex-start;
+}
+
+.media-content {
+    position: relative;
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+}
+
+img.media-content {
+    object-fit: contain;
+    min-height: min(50vh, 300px);
+}
+
+/* Video styles */
+video.media-content {
+    max-width: 90%;
+    max-height: 70vh;
+    width: auto;
+    object-fit: contain;
+}
+
+/* Controls Components */
+.controls-wrapper {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.top-controls {
+    position: fixed;
+    top: 2vh;
+    left: 2vw;
+    right: 2vw;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    pointer-events: none;
+    z-index: 20;
+}
+
+.top-controls .menu-controls,
+.top-controls .book-controls {
+    pointer-events: auto;
+}
+
+/* Side Controls - Updated for fixed positioning */
+.side-controls {
+    position: fixed;
+    top: 50%;
+    width: 100%;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.side-controls .control-button:first-child {
+    position: absolute;
+    left: 2%;
+    transform: translateY(-50%);
+}
+
+.side-controls .control-button:last-child {
+    position: absolute;
+    right: 2%;
+    transform: translateY(-50%);
+}
+
+/* Hide disabled buttons */
+.control-button:disabled {
+    display: none;
+}
+
+/* Bottom controls */
+.bottom-controls {
+    position: fixed;
+    bottom: 2vh;
+    left: 0;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    pointer-events: none;
+    z-index: 15;
+}
+
+.video-controls {
+    display: flex;
+    pointer-events: auto;
+}
+
+/* Common button styles */
+.control-button {
+    pointer-events: auto;
+    background: white;
+    border-radius: 50%;
+    width: 3rem;
+    height: 3rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    transition: transform 0.2s;
+    border: none;
+    outline: none;
+}
+
+.control-button:hover {
+    transform: scale(1.1);
+}
+
+.control-button.active {
+    background-color: #e6f7ff;
+    color: #1890ff;
+    box-shadow: 0 0 0 2px #1890ff;
+}
+
+.dropdown-menu {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: white;
+    display: flex;
+    flex-direction: column;
+    z-index: 50;
+    padding-top: 2rem;
+    padding-left: 2vw;
+}
+
+.dropdown-item {
+    width: fit-content;
+    margin-left: 2rem;
+    padding: 0.8rem 0;
+    font-size: 1.25rem;
+    font-weight: 900;
+    font-size: clamp(21px,5.5vw,32px);
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.dropdown-item:hover {
+    color: #666;
+}
+
+.dropdown-item.active {
+    color: #1890ff;
+}
+
+/* Content Display */
+.content-display,
+.p-4.overflow-auto.max-h-full {
+    padding: 2rem;
+    height: 100%;
+    overflow-y: auto;
+    text-align: left;
+    align-self: flex-start;
+    width: 100%;
+}
+
+/* Paragraph and Post Elements */
+p, meta-post {
+    font-size: clamp(1rem, 3.5vw, 1.4rem);
+    line-height: 133%;
+    display: block;
+    margin-top: 0.75rem;
+}
+
+/* List Styling */
+.p-4.overflow-auto.max-h-full ul,
+.p-4.overflow-auto.max-h-full ol {
+    margin: 1rem 0;
+    padding-left: 2rem;
+}
+
+.p-4.overflow-auto.max-h-full ul li,
+.p-4.overflow-auto.max-h-full ol li {
+    font-size: 1.0625rem;
+    line-height: 133%;
+    margin: 0.5rem 0;
+}
+
+.p-4.overflow-auto.max-h-full ul {
+    list-style-type: disc;
+}
+
+.p-4.overflow-auto.max-h-full ol {
+    list-style-type: decimal;
+}
+
+/* Exercise Lists */
+.exer ol {
+    counter-reset: list;
+}
+
+.exer ol > li {
+    list-style: none;
+}
+
+.exer ol li p {
+    display: inline;
+}
+
+.exer ol > li:before {
+    content: "(" counter(list, lower-alpha) ") ";
+    counter-increment: list;
+}
+
+/* Strong Element */
+strong {
+    margin: 0;
+    padding: 0;
+    padding-bottom: 0.5rem;
+    font-weight: 700;
+    font-size: clamp(1.2rem, 4.3vw, 1.6rem);
+    display: inline-block;
+    margin-bottom: 0.5rem;
+}
+
+/* Highlight Button */
+.highlight-button {
+    position: absolute;
+    bottom: 1rem;
+    right: 1rem;
+    pointer-events: auto;
+    background: rgb(220, 220, 220);
+    color: rgb(96, 96, 96);
+    border-radius: 50%;
+    padding: 0.4rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    z-index: 10;
+    width: 2rem;
+    height: 2rem;
+    font-size: 0.9rem;
+}
+
+.highlight-button.active {
+    background: rgb(220, 220, 220);
+    color: rgb(96, 96, 96);
+}
+
+.highlight-button:hover {
+    transform: scale(1.05);
+}
+
+/* Video control button in corner */
+.video-button {
+    position: absolute;
+    bottom: 1rem;
+    right: 1rem;
+    pointer-events: auto;
+    background: rgb(220, 220, 220);
+    color: rgb(96, 96, 96);
+    border-radius: 50%;
+    padding: 0.4rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    z-index: 10;
+    width: 2rem;
+    height: 2rem;
+    font-size: 0.9rem;
+}
+
+.video-button:hover {
+    transform: scale(1.05);
+}
+
+/* MathJax Configuration */
+.MathJax { 
+    font-size: 1em !important; 
+}
+
+.math {
+    overflow-x: auto;
+    overflow-y: hidden;
+    display: block;
+}
+
+/* Styling for unavailable menu items */
+.dropdown-item.unavailable {
+    display: none;
+}
+
+/* SVG Highlighter Styles */
+/* Highlighter cursor */
+.highlighter-cursor {
+    position: absolute;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    background-color: rgba(178, 235, 242, 0.8); /* Royal blue with opacity */
+    pointer-events: none; /* So it doesn't interfere with clicks */
+    z-index: 100;
+    transform: translate(-50%, -50%); /* Center the dot on the cursor */
+    box-shadow: 0 0 5px rgba(178, 235, 242, 0.8);
+    transition: transform 0.05s ease-out; /* Smooth movement */
+}
+
+/* SVG container for all highlighter lines */
+.highlighter-line {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 98;
+}
+
+/* SVG path for highlighter lines */
+.highlighter-line-path {
+    fill: none;
+    stroke: rgba(178, 235, 242, 0.5);
+    stroke-width: 2rem; 
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    filter: blur(1px); /* Slight blur for smoother appearance */
+}
+
+/* Highlighter active indicator */
+.highlighter-indicator {
+    display:none;
+    /*position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(178, 235, 242, 0.8);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    z-index: 101;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    pointer-events: none;*/
+}
+
+/* When highlighter is active, change cursor to crosshair */
+.content-container.highlighter-active {
+    cursor: none; /* Hide the default cursor */
+}
+
+/* Helper class to hide elements */
+.hidden {
+    display: none !important;
+}
+
+/* Disable all interaction for anything in drawing mode */
+.drawing-section * {
+    -webkit-touch-callout: none !important;
+    -webkit-user-select: none !important;
+    -webkit-tap-highlight-color: rgba(0,0,0,0) !important;
+    touch-action: none !important;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    /* In mobile view, stack the content and drawing panel */
+    .content-container.split-view {
+        flex-direction: column;
+    }
+    
+    .content-section.half-width {
+        flex: 0 0 50%;
+        border-right: none;
+        border-bottom: 1px solid #ddd;
+    }
+    
+    .drawing-section {
+        flex: 0 0 50%;
+    }
+    
+    .drawing-toolbar {
+        padding: 5px;
+        justify-content: space-between;
+    }
+    
+    .page-navigation {
+        margin-left: 0;
+    }
+}
+
+@media (max-width: 640px) {
+    .content-container {
+        top: 5vh;
+        left: 5vw;
+        width: 90vw;
+        height: 90vh;
+    }
+    
+    .control-button {
+        width: 2.5rem;
+        height: 2.5rem;
+    }
+    
+    .dropdown-menu {
+        padding-top: 1rem;
+        padding-left: 5vw;
+    }
+    
+    .dropdown-item {
+        margin-left: 0;  /* Remove extra margin since we have padding-left on parent */
+        padding: 0.6rem 0;  /* Slightly reduce padding for mobile */
+    }
+
+    .highlight-button {
+        bottom: 0.5rem;
+        right: 0.5rem;
+        width: 1.6rem;
+        height: 1.6rem;
+    }
+    
+    .video-button {
+        bottom: 0.5rem;
+        right: 0.5rem;
+        width: 1.6rem;
+        height: 1.6rem;
+    }
+}

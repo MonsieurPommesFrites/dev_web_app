@@ -1,0 +1,66 @@
+/* responsive.css - Responsive design rules */
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    /* In mobile view, stack the content and drawing panel */
+    .content-container.split-view {
+        flex-direction: column;
+    }
+    
+    .content-section.half-width {
+        flex: 0 0 50%;
+        border-right: none;
+        border-bottom: 1px solid #ddd;
+    }
+    
+    .drawing-section {
+        flex: 0 0 50%;
+    }
+    
+    .drawing-toolbar {
+        padding: 5px;
+        justify-content: space-between;
+    }
+    
+    .page-navigation {
+        margin-left: 0;
+    }
+}
+
+@media (max-width: 640px) {
+    .content-container {
+        top: 5vh;
+        left: 5vw;
+        width: 90vw;
+        height: 90vh;
+    }
+    
+    .control-button {
+        width: 2.5rem;
+        height: 2.5rem;
+    }
+    
+    .dropdown-menu {
+        padding-top: 1rem;
+        padding-left: 5vw;
+    }
+    
+    .dropdown-item {
+        margin-left: 0;  /* Remove extra margin since we have padding-left on parent */
+        padding: 0.6rem 0;  /* Slightly reduce padding for mobile */
+    }
+
+    .highlight-button {
+        bottom: 0.5rem;
+        right: 0.5rem;
+        width: 1.6rem;
+        height: 1.6rem;
+    }
+    
+    .video-button {
+        bottom: 0.5rem;
+        right: 0.5rem;
+        width: 1.6rem;
+        height: 1.6rem;
+    }
+}

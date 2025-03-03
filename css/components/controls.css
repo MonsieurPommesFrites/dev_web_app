@@ -1,0 +1,131 @@
+/* controls.css - Styles for controls, navigation, and menus */
+
+/* Controls Components */
+.controls-wrapper {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.top-controls {
+    position: fixed;
+    top: 2vh;
+    left: 2vw;
+    right: 2vw;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    pointer-events: none;
+    z-index: 20;
+}
+
+.top-controls .menu-controls,
+.top-controls .book-controls {
+    pointer-events: auto;
+}
+
+/* Side Controls - Updated for fixed positioning */
+.side-controls {
+    position: fixed;
+    top: 50%;
+    width: 100%;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.side-controls .control-button:first-child {
+    position: absolute;
+    left: 2%;
+    transform: translateY(-50%);
+}
+
+.side-controls .control-button:last-child {
+    position: absolute;
+    right: 2%;
+    transform: translateY(-50%);
+}
+
+/* Hide disabled buttons */
+.control-button:disabled {
+    display: none;
+}
+
+/* Bottom controls */
+.bottom-controls {
+    position: fixed;
+    bottom: 2vh;
+    left: 0;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    pointer-events: none;
+    z-index: 15;
+}
+
+.video-controls {
+    display: flex;
+    pointer-events: auto;
+}
+
+/* Common button styles */
+.control-button {
+    pointer-events: auto;
+    background: white;
+    border-radius: 50%;
+    width: 3rem;
+    height: 3rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    transition: transform 0.2s;
+    border: none;
+    outline: none;
+}
+
+.control-button:hover {
+    transform: scale(1.1);
+}
+
+.control-button.active {
+    background-color: #e6f7ff;
+    color: #1890ff;
+    box-shadow: 0 0 0 2px #1890ff;
+}
+
+.dropdown-menu {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: white;
+    display: flex;
+    flex-direction: column;
+    z-index: 50;
+    padding-top: 2rem;
+    padding-left: 2vw;
+}
+
+.dropdown-item {
+    width: fit-content;
+    margin-left: 2rem;
+    padding: 0.8rem 0;
+    font-size: 1.25rem;
+    font-weight: 900;
+    font-size: clamp(21px,5.5vw,32px);
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.dropdown-item:hover {
+    color: #666;
+}
+
+.dropdown-item.active {
+    color: #1890ff;
+}

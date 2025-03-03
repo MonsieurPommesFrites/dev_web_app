@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Alternative Babel Test</title>
+    <!-- Use a different version of Babel standalone -->
+    <script src="https://unpkg.com/@babel/standalone@7.21.4/babel.min.js"></script>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+</head>
+<body>
+    <div id="root"></div>
+    
+    <script type="text/babel" data-presets="react">
+        // Simple React component with JSX
+        const TestComponent = () => {
+            return React.createElement('div', {
+                style: {
+                    padding: '20px',
+                    backgroundColor: '#f0f0f0',
+                    border: '1px solid #ccc'
+                }
+            }, 
+            React.createElement('h2', null, 'Babel Test'),
+            React.createElement('p', null, 'Testing Babel transformation')
+            );
+        };
+        
+        // Render the component
+        document.addEventListener('DOMContentLoaded', () => {
+            ReactDOM.createRoot(document.getElementById('root')).render(
+                React.createElement(TestComponent)
+            );
+            console.log('Babel test initialized');
+        });
+    </script>
+</body>
+</html>

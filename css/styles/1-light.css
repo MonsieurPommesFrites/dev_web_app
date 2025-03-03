@@ -1,0 +1,18 @@
+:root {
+    --body-bg-color: #F2F4F4;
+    --body-text-color: black;
+    --link-color: #004699;
+    --highlight-color: #C62828;
+    --shadow-bg-color: white;
+    --shadow-box-shadow: rgba(0, 0, 0, 0.2);
+    --video-border-box-shadow: rgba(0, 0, 0, 0.19);
+    --popup-bg-color: #ECF0F1;
+    --thm-bg-color: #CFD8DC;
+    --mcq-bg-color: #D7CCC8;
+    --rmk-bg-color: #FFCCBC;
+    --exmp-bg-color: #FFECB3;
+    --defn-bg-color: #B2EBF2;
+    --proof-bg-color: #EEEEEE;
+    --exer-bg-color: #B2DFDB;
+    --axiom-bg-color: #C5CAE9;
+}

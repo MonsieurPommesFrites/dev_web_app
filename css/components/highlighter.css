@@ -1,0 +1,58 @@
+/* highlighter.css - Styles for the highlighter feature */
+
+/* Highlighter cursor */
+.highlighter-cursor {
+    position: absolute;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    background-color: rgba(178, 235, 242, 0.8); /* Royal blue with opacity */
+    pointer-events: none; /* So it doesn't interfere with clicks */
+    z-index: 100;
+    transform: translate(-50%, -50%); /* Center the dot on the cursor */
+    box-shadow: 0 0 5px rgba(178, 235, 242, 0.8);
+    transition: transform 0.05s ease-out; /* Smooth movement */
+}
+
+/* SVG container for all highlighter lines */
+.highlighter-line {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 98;
+}
+
+/* SVG path for highlighter lines */
+.highlighter-line-path {
+    fill: none;
+    stroke: rgba(178, 235, 242, 0.5);
+    stroke-width: 2rem; 
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    filter: blur(1px); /* Slight blur for smoother appearance */
+}
+
+/* Highlighter active indicator */
+.highlighter-indicator {
+    display: none;
+    /*position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(178, 235, 242, 0.8);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    z-index: 101;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    pointer-events: none;*/
+}
+
+/* When highlighter is active, change cursor to crosshair */
+.content-container.highlighter-active {
+    cursor: none; /* Hide the default cursor */
+}

@@ -1,0 +1,176 @@
+/* content.css - Styles for content display */
+
+/* Media Container Styles */
+.media-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Center images and videos */
+.media-container:has(img), 
+.media-container:has(video) {
+    align-items: center;
+    justify-content: center;
+}
+
+/* Left align text content */
+.media-container:not(:has(img)):not(:has(video)) {
+    align-items: flex-start;
+    justify-content: flex-start;
+}
+
+.media-content {
+    position: relative;
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+}
+
+img.media-content {
+    object-fit: contain;
+    min-height: min(50vh, 300px);
+}
+
+/* Video styles */
+video.media-content {
+    max-width: 90%;
+    max-height: 70vh;
+    width: auto;
+    object-fit: contain;
+}
+
+/* Content Display */
+.content-display,
+.p-4.overflow-auto.max-h-full {
+    padding: 2rem;
+    height: 100%;
+    overflow-y: auto;
+    text-align: left;
+    align-self: flex-start;
+    width: 100%;
+}
+
+/* Paragraph and Post Elements */
+p, meta-post {
+    font-size: clamp(1rem, 3.5vw, 1.4rem);
+    line-height: 133%;
+    display: block;
+    margin-top: 0.75rem;
+}
+
+/* List Styling */
+.p-4.overflow-auto.max-h-full ul,
+.p-4.overflow-auto.max-h-full ol {
+    margin: 1rem 0;
+    padding-left: 2rem;
+}
+
+.p-4.overflow-auto.max-h-full ul li,
+.p-4.overflow-auto.max-h-full ol li {
+    font-size: 1.0625rem;
+    line-height: 133%;
+    margin: 0.5rem 0;
+}
+
+.p-4.overflow-auto.max-h-full ul {
+    list-style-type: disc;
+}
+
+.p-4.overflow-auto.max-h-full ol {
+    list-style-type: decimal;
+}
+
+/* Exercise Lists */
+.exer ol {
+    counter-reset: list;
+}
+
+.exer ol > li {
+    list-style: none;
+}
+
+.exer ol li p {
+    display: inline;
+}
+
+.exer ol > li:before {
+    content: "(" counter(list, lower-alpha) ") ";
+    counter-increment: list;
+}
+
+/* Strong Element */
+strong {
+    margin: 0;
+    padding: 0;
+    padding-bottom: 0.5rem;
+    font-weight: 700;
+    font-size: clamp(1.2rem, 4.3vw, 1.6rem);
+    display: inline-block;
+    margin-bottom: 0.5rem;
+}
+
+/* Highlight Button */
+.highlight-button {
+    position: absolute;
+    bottom: 1rem;
+    right: 1rem;
+    pointer-events: auto;
+    background: rgb(220, 220, 220);
+    color: rgb(96, 96, 96);
+    border-radius: 50%;
+    padding: 0.4rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    z-index: 10;
+    width: 2rem;
+    height: 2rem;
+    font-size: 0.9rem;
+}
+
+.highlight-button.active {
+    background: rgb(220, 220, 220);
+    color: rgb(96, 96, 96);
+}
+
+.highlight-button:hover {
+    transform: scale(1.05);
+}
+
+/* Video control button in corner */
+.video-button {
+    position: absolute;
+    bottom: 1rem;
+    right: 1rem;
+    pointer-events: auto;
+    background: rgb(220, 220, 220);
+    color: rgb(96, 96, 96);
+    border-radius: 50%;
+    padding: 0.4rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    z-index: 10;
+    width: 2rem;
+    height: 2rem;
+    font-size: 0.9rem;
+}
+
+.video-button:hover {
+    transform: scale(1.05);
+}
+
+/* Styling for unavailable menu items */
+.dropdown-item.unavailable {
+    display: none;
+}

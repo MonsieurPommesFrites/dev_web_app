@@ -1,0 +1,18 @@
+:root {
+--body-bg-color: #282828; 
+--body-text-color: #d7d7d7; 
+--link-color: #81D4FA; 
+--highlight-color: #282828; 
+--shadow-bg-color: white; 
+--shadow-box-shadow: rgba(91, 70, 54, 0.2); 
+--video-border-box-shadow: rgba(91, 70, 54, 0.19); 
+--popup-bg-color: #1F1F1F; 
+--thm-bg-color: #282828; 
+--mcq-bg-color: #282828; 
+--rmk-bg-color: #282828; 
+--exmp-bg-color: #282828; 
+--defn-bg-color: #282828; 
+--proof-bg-color: #282828; 
+--exer-bg-color: #282828; 
+--axiom-bg-color: #282828; 
+}
