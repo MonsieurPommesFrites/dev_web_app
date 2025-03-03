@@ -1,4 +1,4 @@
-// drawing.js - Utility functions for the drawing feature
+// drawing-utils.js - Utilities for the drawing feature
 
 window.DrawingUtils = {
     // Path smoothing function
@@ -95,7 +95,7 @@ window.DrawingUtils = {
     
     // Enhanced Pointer Move handler factory
     createPointerMoveHandler: (isDrawing, canvasRef, pathPoints, setPathPoints, setSmoothedPath, setCurrentStroke, 
-                             loadPageStrokes, smoothingFactor, smoothingInterval, strokeColor, strokeWidth) => {
+                               loadPageStrokes, smoothingFactor, smoothingInterval, strokeColor, strokeWidth) => {
         return (e) => {
             // Check drawing state first to avoid unnecessary processing
             if (!isDrawing || !canvasRef.current) return;
@@ -189,7 +189,7 @@ window.DrawingUtils = {
     
     // Enhanced Pointer Up handler factory
     createPointerUpHandler: (isDrawing, pathPoints, smoothedPath, setIsDrawing, setCurrentStroke, 
-                           saveCurrentStroke, setPathPoints, setSmoothedPath) => {
+                             saveCurrentStroke, setPathPoints, setSmoothedPath) => {
         return (e) => {
             // Skip if not in drawing mode
             if (!isDrawing) return;

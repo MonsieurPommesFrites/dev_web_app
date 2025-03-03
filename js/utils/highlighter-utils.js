@@ -1,4 +1,4 @@
-// highlighter.js - Utility functions for the highlighter feature
+// highlighter-utils.js - Utilities for the highlighter feature
 
 window.HighlighterUtils = {
     initializeState: () => ({
@@ -69,7 +69,7 @@ window.HighlighterUtils = {
         }
         
         // Clear any existing timeout for path completion
-        if (pathTimeoutRef.current) clearTimeout(pathTimeoutRef.current);
+        if (pathTimeoutRef && pathTimeoutRef.current) clearTimeout(pathTimeoutRef.current);
         
         // Set a new timeout for path completion
         const timeoutId = setTimeout(() => {
@@ -105,7 +105,9 @@ window.HighlighterUtils = {
             }
         }, 200);
         
-        setState('pathTimeoutRef', timeoutId);
+        if (pathTimeoutRef) {
+            setState('pathTimeoutRef', timeoutId);
+        }
     },
     
     handleMouseUp: (state, setState) => {
@@ -149,7 +151,7 @@ window.HighlighterUtils = {
         
         setState('autoDeactivateTimeoutRef', deactivateTimeout);
         
-        if (pathTimeoutRef.current) {
+        if (pathTimeoutRef && pathTimeoutRef.current) {
             clearTimeout(pathTimeoutRef.current);
             setState('pathTimeoutRef', null);
         }
@@ -174,7 +176,7 @@ window.HighlighterUtils = {
                 setState('autoDeactivateTimeoutRef', null);
             }
             
-            if (state.pathTimeoutRef.current) {
+            if (state.pathTimeoutRef && state.pathTimeoutRef.current) {
                 clearTimeout(state.pathTimeoutRef.current);
                 setState('pathTimeoutRef', null);
             }
@@ -185,7 +187,7 @@ window.HighlighterUtils = {
             setState('allPaths', []);
             setState('fixedYPosition', null);
             
-            if (state.pathTimeoutRef.current) {
+            if (state.pathTimeoutRef && state.pathTimeoutRef.current) {
                 clearTimeout(state.pathTimeoutRef.current);
                 setState('pathTimeoutRef', null);
             }

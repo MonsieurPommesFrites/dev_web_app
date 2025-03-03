@@ -30,7 +30,6 @@ $contentJson = json_encode($contentData);
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.20.7/babel.min.js"></script>
     
     <!-- MathJax Configuration -->
     <script>
@@ -53,22 +52,13 @@ $contentJson = json_encode($contentData);
     <div id="root"></div>
     
     <script>
-        // Define content data globally
+        // Define content data globally so it's accessible to our React app
         window.contentData = <?php echo $contentJson ?? '{}'; ?>;
     </script>
     
-    <!-- Utility modules -->
-    <script src="js/utils/highlighter.js" type="text/javascript"></script>
-    <script src="js/utils/drawing.js" type="text/javascript"></script>
-    
-    <!-- React components (load in correct order) -->
-    <script type="text/babel" src="js/components/ContentDisplay.jsx"></script>
-    <script type="text/babel" src="js/components/DrawingPanel.jsx"></script>
-    <script type="text/babel" src="js/components/Navigation.jsx"></script>
-    <script type="text/babel" src="js/components/Highlighter.jsx"></script>
-    <script type="text/babel" src="js/components/App.jsx"></script>
-    
-    <!-- Main application -->
-    <script type="text/babel" src="js/main.js"></script>
+    <!-- Application code -->
+    <script src="js/utils/highlighter-utils.js"></script>
+    <script src="js/utils/drawing-utils.js"></script>
+    <script src="js/app.js"></script>
 </body>
 </html>
