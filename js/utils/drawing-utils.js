@@ -1,219 +1,173 @@
-// drawing-utils.js - Utilities for the drawing feature
+// drawing-utils.js - Paper.js based utilities for the drawing feature
 
 window.DrawingUtils = {
-    // Path smoothing function
-    smoothPath: (points, smoothingFactor, stepSize) => {
-        if (points.length < 3) return points;
+    // Initialize Paper.js on the canvas
+    initializePaper: (canvasElement, strokeColor, strokeWidth) => {
+        if (!canvasElement) return null;
         
-        const smoothed = [points[0]]; // Start with the first point
-        
-        // Apply Catmull-Rom spline smoothing
-        for (let i = 1; i < points.length - 1; i++) {
-            const prev = points[i - 1];
-            const curr = points[i];
-            const next = points[i + 1];
+        try {
+            // Set up paper.js on the canvas
+            paper.setup(canvasElement);
             
-            // Calculate control points for Catmull-Rom curve
-            const nextX = curr.x + ((next.x - prev.x) * smoothingFactor);
-            const nextY = curr.y + ((next.y - prev.y) * smoothingFactor);
+            // Create configuration object
+            const config = {
+                strokeWidth: strokeWidth || 2,
+                smoothingFactor: 4,
+                pointSamplingThreshold: 0.5,
+                strokeColor: strokeColor || 'black'
+            };
             
-            // Create new smoothed point
-            smoothed.push({
-                ...curr,
-                x: nextX,
-                y: nextY
-            });
+            // Create a tool for drawing
+            const tool = new paper.Tool();
             
-            // Skip points for performance if needed
-            i += (stepSize > 1) ? (stepSize - 1) : 0;
+            // When stylus/mouse is pressed
+            tool.onMouseDown = function(event) {
+                // Create a new path with current configuration
+                this.path = new paper.Path({
+                    segments: [event.point],
+                    strokeColor: config.strokeColor,
+                    strokeWidth: config.strokeWidth,
+                    strokeCap: 'round',
+                    strokeJoin: 'round'
+                });
+            };
+            
+            // When stylus/mouse is dragged
+            tool.onMouseDrag = function(event) {
+                // Make sure we have a path
+                if (!this.path) return;
+                
+                // Point sampling based on threshold for better performance
+                if (event.delta.length > config.pointSamplingThreshold) {
+                    this.path.add(event.point);
+                }
+            };
+            
+            // When stylus/mouse is released
+            tool.onMouseUp = function(event) {
+                // Simplify the path with smoothing factor for better appearance
+                if (this.path && this.path.segments.length > 1) {
+                    this.path.simplify(config.smoothingFactor);
+                }
+                this.path = null;
+            };
+            
+            // Handle touch events for mobile devices and tablets
+            tool.onTouchStart = tool.onMouseDown;
+            tool.onTouchMove = tool.onMouseDrag;
+            tool.onTouchEnd = tool.onMouseUp;
+            
+            // Activate the tool
+            tool.activate();
+            
+            console.log("Paper.js initialized with:", config);
+            
+            return {
+                tool,
+                config,
+                paper
+            };
+        } catch (error) {
+            console.error('Error initializing Paper.js:', error);
+            return null;
         }
-        
-        // Add the last point
-        if (points.length > 1) {
-            smoothed.push(points[points.length - 1]);
-        }
-        
-        return smoothed;
     },
     
-    // Enhanced Pointer Down handler factory
-    createPointerDownHandler: (canvasRef, setIsDrawing, setPathPoints, setSmoothedPath, setCurrentStroke, strokeColor, strokeWidth) => {
-        return (e) => {
-            // Check if it's a pen (Apple Pencil), touch, or mouse
-            if (e.pointerType === 'pen' || e.pointerType === 'touch' || e.pointerType === 'mouse') {
-                e.preventDefault();
-                e.stopPropagation();
-                
-                if (!canvasRef.current) return;
-                
-                // Prevent context menu and selection on all related elements
-                e.currentTarget.style.webkitUserSelect = 'none';
-                e.currentTarget.style.webkitTouchCallout = 'none';
-                e.currentTarget.style.touchAction = 'none';
-                
-                const canvas = canvasRef.current;
-                const rect = canvas.getBoundingClientRect();
-                const dpr = window.devicePixelRatio || 1;
-                
-                // Calculate coordinates with proper scaling
-                const x = (e.clientX - rect.left) * (canvas.width / rect.width / dpr);
-                const y = (e.clientY - rect.top) * (canvas.height / rect.height / dpr);
-                
-                // Start new stroke
-                setIsDrawing(true);
-                
-                // Initialize path points array for smoothing
-                const point = { 
-                    x, 
-                    y, 
-                    color: strokeColor, 
-                    width: strokeWidth, 
-                    pressure: e.pressure || 1 
-                };
-                
-                setPathPoints([point]);
-                setSmoothedPath([point]);
-                setCurrentStroke([point]);
-                
-                // Draw initial point
-                const ctx = canvas.getContext('2d');
-                ctx.beginPath();
-                ctx.moveTo(x, y);
-                ctx.lineTo(x, y);
-                ctx.lineCap = 'round';
-                ctx.lineJoin = 'round';
-                
-                // Use pressure for line width if available
-                const adjustedWidth = e.pressure ? strokeWidth * e.pressure * 2 : strokeWidth;
-                
-                ctx.strokeStyle = strokeColor;
-                ctx.lineWidth = adjustedWidth;
-                ctx.stroke();
-            }
-        };
+    // Update drawing settings
+    updateConfig: (paperInstance, settings) => {
+        if (!paperInstance || !paperInstance.config) return;
+        
+        // Update the configuration object
+        if (settings.strokeColor) {
+            paperInstance.config.strokeColor = settings.strokeColor;
+        }
+        
+        if (settings.strokeWidth) {
+            paperInstance.config.strokeWidth = settings.strokeWidth;
+        }
+        
+        if (settings.smoothingFactor !== undefined) {
+            paperInstance.config.smoothingFactor = settings.smoothingFactor;
+        }
+        
+        if (settings.pointSamplingThreshold !== undefined) {
+            paperInstance.config.pointSamplingThreshold = settings.pointSamplingThreshold;
+        }
+        
+        console.log("Drawing config updated:", paperInstance.config);
     },
     
-    // Enhanced Pointer Move handler factory
-    createPointerMoveHandler: (isDrawing, canvasRef, pathPoints, setPathPoints, setSmoothedPath, setCurrentStroke, 
-                               loadPageStrokes, smoothingFactor, smoothingInterval, strokeColor, strokeWidth) => {
-        return (e) => {
-            // Check drawing state first to avoid unnecessary processing
-            if (!isDrawing || !canvasRef.current) return;
-            
-            // Handle all pointer types but focus on pen
-            if (e.pointerType === 'pen' || e.pointerType === 'touch' || e.pointerType === 'mouse') {
-                e.preventDefault();
-                e.stopPropagation();
+    // Clear the canvas
+    clearCanvas: (paperInstance) => {
+        if (!paperInstance || !paperInstance.paper) return;
+        
+        paperInstance.paper.project.activeLayer.removeChildren();
+        paperInstance.paper.view.draw();
+    },
+    
+    // Export the drawing to a format compatible with the existing storage system
+    exportDrawing: (paperInstance) => {
+        if (!paperInstance || !paperInstance.paper) return [];
+        
+        // Convert Paper.js paths to the stroke format used in storage
+        const strokes = [];
+        const layer = paperInstance.paper.project.activeLayer;
+        
+        layer.children.forEach(path => {
+            if (path instanceof paperInstance.paper.Path) {
+                const points = path.segments.map(segment => ({
+                    x: segment.point.x,
+                    y: segment.point.y,
+                    color: path.strokeColor.toCSS(true),
+                    width: path.strokeWidth
+                }));
                 
-                const canvas = canvasRef.current;
-                const rect = canvas.getBoundingClientRect();
-                const dpr = window.devicePixelRatio || 1;
-                
-                // Calculate coordinates with proper scaling
-                const x = (e.clientX - rect.left) * (canvas.width / rect.width / dpr);
-                const y = (e.clientY - rect.top) * (canvas.height / rect.height / dpr);
-                
-                // Store pressure value for variable line width
-                const pressure = e.pressure || 1;
-                const point = { x, y, color: strokeColor, width: strokeWidth, pressure };
-                
-                // Add point to raw path points
-                setPathPoints(prev => [...prev, point]);
-                
-                // Apply smoothing if we have enough points
-                if (pathPoints.length >= 3) {
-                    // Simple Catmull-Rom spline smoothing
-                    const smoothedPoints = window.DrawingUtils.smoothPath(
-                        [...pathPoints, point], 
-                        smoothingFactor, 
-                        smoothingInterval
-                    );
-                    
-                    setSmoothedPath(smoothedPoints);
-                    
-                    // Clear canvas and redraw the entire path
-                    const ctx = canvas.getContext('2d');
-                    ctx.clearRect(0, 0, canvas.width / dpr, canvas.height / dpr);
-                    
-                    // Redraw all saved strokes first
-                    loadPageStrokes();
-                    
-                    // Then draw the current smooth path
-                    ctx.beginPath();
-                    ctx.moveTo(smoothedPoints[0].x, smoothedPoints[0].y);
-                    
-                    for (let i = 1; i < smoothedPoints.length; i++) {
-                        const point = smoothedPoints[i];
-                        const prevPoint = smoothedPoints[i - 1];
-                        
-                        // If we have four points, use bezier curve for smoother lines
-                        if (i >= 2 && i < smoothedPoints.length - 1) {
-                            const cp1x = prevPoint.x + (point.x - prevPoint.x) / 3;
-                            const cp1y = prevPoint.y + (point.y - prevPoint.y) / 3;
-                            const cp2x = point.x - (point.x - prevPoint.x) / 3;
-                            const cp2y = point.y - (point.y - prevPoint.y) / 3;
-                            
-                            ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, point.x, point.y);
-                        } else {
-                            ctx.lineTo(point.x, point.y);
-                        }
-                    }
-                    
-                    ctx.lineCap = 'round';
-                    ctx.lineJoin = 'round';
-                    ctx.strokeStyle = strokeColor;
-                    ctx.lineWidth = strokeWidth;
-                    ctx.stroke();
-                } else {
-                    // Not enough points yet, just add to the current stroke
-                    setCurrentStroke(prev => [...prev, point]);
-                    
-                    // Draw line on canvas
-                    const ctx = canvas.getContext('2d');
-                    const prevPoint = pathPoints[pathPoints.length - 1];
-                    
-                    ctx.beginPath();
-                    ctx.moveTo(prevPoint.x, prevPoint.y);
-                    ctx.lineTo(x, y);
-                    
-                    // Use pressure for line width
-                    const adjustedWidth = pressure ? strokeWidth * pressure * 2 : strokeWidth;
-                    
-                    ctx.strokeStyle = strokeColor;
-                    ctx.lineWidth = adjustedWidth;
-                    ctx.stroke();
+                if (points.length > 1) {
+                    strokes.push(points);
                 }
             }
-        };
+        });
+        
+        return strokes;
     },
     
-    // Enhanced Pointer Up handler factory
-    createPointerUpHandler: (isDrawing, pathPoints, smoothedPath, setIsDrawing, setCurrentStroke, 
-                             saveCurrentStroke, setPathPoints, setSmoothedPath) => {
-        return (e) => {
-            // Skip if not in drawing mode
-            if (!isDrawing) return;
+    // Import saved strokes from storage format to Paper.js
+    importDrawing: (paperInstance, strokes) => {
+        if (!paperInstance || !paperInstance.paper || !strokes || !strokes.length) return;
+        
+        // Clear canvas before importing
+        window.DrawingUtils.clearCanvas(paperInstance);
+        
+        // Create paths from saved strokes
+        strokes.forEach(stroke => {
+            if (stroke.length < 2) return;
             
-            // Handle all pointer types
-            if (e && (e.pointerType === 'pen' || e.pointerType === 'touch' || e.pointerType === 'mouse')) {
-                e.preventDefault();
-                e.stopPropagation();
-            }
+            const path = new paperInstance.paper.Path({
+                strokeColor: stroke[0].color || paperInstance.config.strokeColor,
+                strokeWidth: stroke[0].width || paperInstance.config.strokeWidth,
+                strokeCap: 'round',
+                strokeJoin: 'round'
+            });
             
-            // Finalize the smoothed path
-            const finalStroke = smoothedPath.length > 1 ? smoothedPath : pathPoints;
-            setCurrentStroke(finalStroke);
+            // Add all points to the path
+            stroke.forEach(point => {
+                path.add(new paperInstance.paper.Point(point.x, point.y));
+            });
             
-            setIsDrawing(false);
-            
-            // Save the stroke if it has points
-            if ((smoothedPath.length > 1) || (pathPoints.length > 1)) {
-                saveCurrentStroke(finalStroke);
-            }
-            
-            // Reset path data
-            setPathPoints([]);
-            setSmoothedPath([]);
+            // Apply smoothing to the imported path
+            path.simplify(paperInstance.config.smoothingFactor);
+        });
+        
+        // Update the view
+        paperInstance.paper.view.draw();
+    },
+    
+    // Handle resize events
+    handleResize: (paperInstance) => {
+        if (!paperInstance || !paperInstance.paper) return;
+        
+        paperInstance.paper.view.onResize = function() {
+            paperInstance.paper.view.draw();
         };
     }
 };

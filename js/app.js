@@ -1,4 +1,4 @@
-// app.js - Main application component without JSX
+// app.js - Main application component without JSX, enhanced with Paper.js for drawing
 
 // App component
 const App = () => {
@@ -45,18 +45,15 @@ const App = () => {
     const [strokeColor, setStrokeColor] = React.useState('#000000');
     const [strokeWidth, setStrokeWidth] = React.useState(2);
     const [currentPage, setCurrentPage] = React.useState(1);
-    const [pathPoints, setPathPoints] = React.useState([]);
-    const [smoothedPath, setSmoothedPath] = React.useState([]);
+    
+    // Paper.js instance reference
+    const paperInstance = React.useRef(null);
     
     // Refs
     const contentRef = React.useRef(null);
     const videoRef = React.useRef(null);
     const canvasRef = React.useRef(null);
     const lastKnownMousePosition = React.useRef({ x: 0, y: 0 });
-    
-    // Smoothing settings for drawing
-    const smoothingFactor = 0.2;
-    const smoothingInterval = 8;
     
     // Get current content
     let currentContent = [];
@@ -129,13 +126,11 @@ const App = () => {
     
     // Toggle note-taking mode
     const toggleNoteMode = () => {
-        // Save current strokes if any before toggling
-        if (isNoteMode && currentStroke.length > 1) {
-            saveCurrentStroke();
-        }
-        
         // Always save notes before toggling
-        saveNotesToStorage();
+        if (isNoteMode && paperInstance.current) {
+            saveCurrentStroke();
+            saveNotesToStorage();
+        }
         
         setIsNoteMode(!isNoteMode);
         
@@ -153,224 +148,55 @@ const App = () => {
         setIsHighlighterActive(!isHighlighterActive);
     };
     
-    // Canvas initialization
+    // Initialize Canvas with Paper.js
     const initCanvas = () => {
         if (!canvasRef.current) return;
         
         const canvas = canvasRef.current;
         const container = canvas.parentElement;
         
-        // Get the display pixel ratio for better rendering on high-DPI displays
-        const dpr = window.devicePixelRatio || 1;
-        
-        // Set canvas dimensions to match container with pixel ratio adjustment
-        canvas.width = container.clientWidth * dpr;
-        canvas.height = container.clientHeight * dpr;
+        // Set canvas dimensions
+        canvas.width = container.clientWidth;
+        canvas.height = container.clientHeight;
         
         // Set CSS size
         canvas.style.width = `${container.clientWidth}px`;
         canvas.style.height = `${container.clientHeight}px`;
         
-        // Set up canvas context with adjusted scaling
-        const ctx = canvas.getContext('2d');
-        ctx.scale(dpr, dpr);
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-        ctx.strokeStyle = strokeColor;
-        ctx.lineWidth = strokeWidth;
+        // Initialize Paper.js on the canvas
+        paperInstance.current = window.DrawingUtils.initializePaper(
+            canvas, 
+            strokeColor, 
+            strokeWidth
+        );
+        
+        // Handle resize events
+        window.DrawingUtils.handleResize(paperInstance.current);
     };
     
-    // Draw the smooth path on canvas
-    const drawSmoothPath = (smoothedPoints) => {
-        if (!canvasRef.current || smoothedPoints.length < 2) return;
-        
-        const canvas = canvasRef.current;
-        const ctx = canvas.getContext('2d');
-        const dpr = window.devicePixelRatio || 1;
-        
-        // Clear canvas and redraw the entire path
-        ctx.clearRect(0, 0, canvas.width / dpr, canvas.height / dpr);
-        
-        // Redraw all saved strokes first
-        loadPageStrokes();
-        
-        // Then draw the current smooth path
-        ctx.beginPath();
-        ctx.moveTo(smoothedPoints[0].x, smoothedPoints[0].y);
-        
-        for (let i = 1; i < smoothedPoints.length; i++) {
-            const point = smoothedPoints[i];
-            const prevPoint = smoothedPoints[i - 1];
-            
-            // If we have four points, we can do cubic Bezier curve
-            if (i >= 2 && i < smoothedPoints.length - 1) {
-                const cp1x = prevPoint.x + (point.x - prevPoint.x) / 3;
-                const cp1y = prevPoint.y + (point.y - prevPoint.y) / 3;
-                const cp2x = point.x - (point.x - prevPoint.x) / 3;
-                const cp2y = point.y - (point.y - prevPoint.y) / 3;
-                
-                ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, point.x, point.y);
-            } else {
-                ctx.lineTo(point.x, point.y);
-            }
-        }
-        
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-        ctx.strokeStyle = strokeColor;
-        ctx.lineWidth = strokeWidth;
-        ctx.stroke();
-    };
-    
-    // Start drawing function
-    const startDrawing = (e) => {
-        if (!canvasRef.current || !isNoteMode) return;
-        
-        // Prevent default behavior to avoid scrolling and other interactions
-        e.preventDefault();
-        e.stopPropagation();
-        
-        setIsDrawing(true);
-        
-        const canvas = canvasRef.current;
-        const rect = canvas.getBoundingClientRect();
-        const dpr = window.devicePixelRatio || 1;
-        
-        // Get pointer position with improved touch handling
-        let x, y;
-        
-        if (e.touches && e.touches.length > 0) {
-            // Touch event (including Apple Pencil)
-            x = e.touches[0].clientX - rect.left;
-            y = e.touches[0].clientY - rect.top;
-        } else {
-            // Mouse event
-            x = e.clientX - rect.left;
-            y = e.clientY - rect.top;
-        }
-        
-        // Scale coordinates according to canvas resolution vs display size
-        x = x * (canvas.width / rect.width / dpr);
-        y = y * (canvas.height / rect.height / dpr);
-        
-        // Create point object
-        const point = { 
-            x, 
-            y, 
-            color: strokeColor, 
-            width: strokeWidth
-        };
-        
-        // Initialize path points array for smoothing
-        setPathPoints([point]);
-        setSmoothedPath([point]);
-        setCurrentStroke([point]);
-        
-        // Start drawing on canvas
-        const ctx = canvas.getContext('2d');
-        ctx.beginPath();
-        ctx.moveTo(x, y);
-        ctx.lineTo(x, y); // Draw a point
-        ctx.strokeStyle = strokeColor;
-        ctx.lineWidth = strokeWidth;
-        ctx.stroke();
-    };
-    
-    // Draw function
-    const draw = (e) => {
-        if (!isDrawing || !canvasRef.current || !isNoteMode) return;
-        
-        // Always prevent default to stop scrolling and other interactions
-        e.preventDefault();
-        e.stopPropagation();
-        
-        const canvas = canvasRef.current;
-        const rect = canvas.getBoundingClientRect();
-        const dpr = window.devicePixelRatio || 1;
-        
-        // Get pointer position with improved touch handling
-        let x, y;
-        
-        if (e.touches && e.touches.length > 0) {
-            // Touch event (including Apple Pencil)
-            x = e.touches[0].clientX - rect.left;
-            y = e.touches[0].clientY - rect.top;
-        } else {
-            // Mouse event
-            x = e.clientX - rect.left;
-            y = e.clientY - rect.top;
-        }
-        
-        // Scale coordinates according to canvas resolution vs display size
-        x = x * (canvas.width / rect.width / dpr);
-        y = y * (canvas.height / rect.height / dpr);
-        
-        // Create point
-        const point = { x, y, color: strokeColor, width: strokeWidth };
-        
-        // Add point to raw path points
-        setPathPoints(prev => [...prev, point]);
-        
-        // Apply smoothing if we have enough points
-        if (pathPoints.length >= 3) {
-            // Apply smoothing
-            const smoothedPoints = window.DrawingUtils.smoothPath(
-                [...pathPoints, point], 
-                smoothingFactor, 
-                smoothingInterval
-            );
-            
-            setSmoothedPath(smoothedPoints);
-            
-            // Redraw the entire smooth path
-            drawSmoothPath(smoothedPoints);
-        } else {
-            // Not enough points yet, just add to the current stroke
-            setCurrentStroke(prev => [...prev, point]);
-            
-            // Draw line on canvas
-            const ctx = canvas.getContext('2d');
-            const prevPoint = pathPoints[pathPoints.length - 1];
-            
-            ctx.beginPath();
-            ctx.moveTo(prevPoint.x, prevPoint.y);
-            ctx.lineTo(x, y);
-            
-            ctx.strokeStyle = strokeColor;
-            ctx.lineWidth = strokeWidth;
-            ctx.stroke();
+    // Handle stroke color change
+    const handleColorChange = (color) => {
+        setStrokeColor(color);
+        if (paperInstance.current) {
+            window.DrawingUtils.updateConfig(paperInstance.current, { strokeColor: color });
         }
     };
     
-    // Stop drawing function
-    const stopDrawing = (e) => {
-        if (!isDrawing || !isNoteMode) return;
-        
-        // Prevent default behavior
-        if (e) {
-            e.preventDefault();
-            e.stopPropagation();
+    // Handle stroke width change
+    const handleWidthChange = (width) => {
+        setStrokeWidth(width);
+        if (paperInstance.current) {
+            window.DrawingUtils.updateConfig(paperInstance.current, { strokeWidth: width });
         }
-        
-        setIsDrawing(false);
-        
-        // Finalize the smoothed path
-        const finalStroke = smoothedPath.length > 1 ? smoothedPath : pathPoints;
-        
-        if (finalStroke.length > 1) {
-            // Save the stroke if it has points
-            saveCurrentStroke(finalStroke);
-        }
-        
-        // Reset path data
-        setPathPoints([]);
-        setSmoothedPath([]);
-        setCurrentStroke([]);
     };
     
-    // Save current stroke to saved notes
-    const saveCurrentStroke = (strokeToSave = null) => {
-        const strokeData = strokeToSave || currentStroke;
+    // Save current drawing to saved notes
+    const saveCurrentStroke = () => {
+        if (!paperInstance.current) return;
+        
+        const strokes = window.DrawingUtils.exportDrawing(paperInstance.current);
+        if (strokes.length === 0) return;
+        
         const noteId = getCurrentNoteId();
         
         setSavedNotes(prev => {
@@ -383,64 +209,37 @@ const App = () => {
                 ...prev,
                 [contentId]: {
                     ...contentNotes,
-                    [noteId]: [...pageStrokes, [...strokeData]],
+                    [noteId]: [...pageStrokes, ...strokes],
                     maxPage
                 }
             };
         });
         
-        // Save notes to storage
+        // Save to storage
         setTimeout(saveNotesToStorage, 50);
     };
     
-    // Load page strokes with proper scaling
+    // Load page strokes with Paper.js
     const loadPageStrokes = () => {
-        if (!canvasRef.current) return;
+        if (!paperInstance.current || !canvasRef.current) return;
         
         const noteId = getCurrentNoteId();
         const contentId = getCurrentContentId();
         const contentNotes = savedNotes[contentId] || {};
         const strokes = contentNotes[noteId] || [];
         
-        const canvas = canvasRef.current;
-        const ctx = canvas.getContext('2d');
-        const dpr = window.devicePixelRatio || 1;
-        
-        // Clear canvas using the proper DPI-adjusted dimensions
-        ctx.clearRect(0, 0, canvas.width / dpr, canvas.height / dpr);
-        
-        // Draw each saved stroke
-        strokes.forEach(stroke => {
-            if (stroke.length < 2) return;
-            
-            const firstPoint = stroke[0];
-            
-            ctx.beginPath();
-            ctx.moveTo(firstPoint.x, firstPoint.y);
-            ctx.strokeStyle = firstPoint.color || strokeColor;
-            ctx.lineWidth = firstPoint.width || strokeWidth;
-            
-            // Draw rest of the points
-            for (let i = 1; i < stroke.length; i++) {
-                ctx.lineTo(stroke[i].x, stroke[i].y);
-            }
-            
-            ctx.stroke();
-        });
+        // Import the strokes to Paper.js
+        window.DrawingUtils.importDrawing(paperInstance.current, strokes);
     };
     
     // Clear canvas (current page only)
     const clearCanvas = () => {
-        if (!canvasRef.current) return;
+        if (!paperInstance.current) return;
         
-        const canvas = canvasRef.current;
-        const ctx = canvas.getContext('2d');
-        const dpr = window.devicePixelRatio || 1;
+        // Clear the Paper.js canvas
+        window.DrawingUtils.clearCanvas(paperInstance.current);
         
-        // Clear canvas with proper DPI scaling
-        ctx.clearRect(0, 0, canvas.width / dpr, canvas.height / dpr);
-        
-        // Clear saved strokes for current page
+        // Update the saved notes to remove strokes for current page
         const noteId = getCurrentNoteId();
         const contentId = getCurrentContentId();
         
@@ -463,8 +262,8 @@ const App = () => {
     
     // Page navigation for notes
     const goToPage = (page) => {
-        // Save current strokes before changing page
-        if (currentStroke.length > 1) {
+        // Save current drawing before changing page
+        if (paperInstance.current) {
             saveCurrentStroke();
         }
         
@@ -473,7 +272,7 @@ const App = () => {
         
         setCurrentPage(page);
         
-        // Load strokes for the new page
+        // Load strokes for the new page after a brief delay
         setTimeout(() => {
             loadPageStrokes();
         }, 50);
@@ -530,6 +329,49 @@ const App = () => {
         }
     };
     
+    // Setup canvas when content or page changes
+    React.useEffect(() => {
+        if (isNoteMode && canvasRef.current) {
+            setTimeout(() => {
+                // If we already have a Paper.js instance, clean it up properly
+                if (paperInstance.current) {
+                    window.DrawingUtils.clearCanvas(paperInstance.current);
+                }
+                
+                initCanvas();
+                loadPageStrokes();
+            }, 100);
+        }
+        
+        // Set current page to 1 when content changes
+        if (!isNoteMode) {
+            setCurrentPage(1);
+        }
+    }, [currentIndex, activeType, isNoteMode, currentPage]);
+    
+    // Handle window resize for canvas
+    React.useEffect(() => {
+        const handleResize = () => {
+            if (isNoteMode && canvasRef.current) {
+                // Paper.js handles resizing internally
+                if (paperInstance.current) {
+                    canvasRef.current.width = canvasRef.current.parentElement.clientWidth;
+                    canvasRef.current.height = canvasRef.current.parentElement.clientHeight;
+                    paperInstance.current.paper.view.viewSize = new paperInstance.current.paper.Size(
+                        canvasRef.current.width,
+                        canvasRef.current.height
+                    );
+                } else {
+                    initCanvas();
+                }
+                loadPageStrokes();
+            }
+        };
+        
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, [isNoteMode, savedNotes, currentPage]);
+    
     // Keyboard shortcuts
     React.useEffect(() => {
         const handleKeyPress = (event) => {
@@ -562,7 +404,7 @@ const App = () => {
         window.addEventListener('keydown', handleKeyPress);
         return () => window.removeEventListener('keydown', handleKeyPress);
     }, [currentIndex, currentContent.length, isVideo, isHighlighterActive, isNoteMode, currentPage]);
-
+    
     // MathJax typesetting
     React.useEffect(() => {
         if (window.MathJax) {
@@ -575,7 +417,7 @@ const App = () => {
             }, 100);
         }
     }, [currentIndex, activeType, showHighlightsOnly]);
-
+    
     // Video ended event
     React.useEffect(() => {
         const video = videoRef.current;
@@ -585,56 +427,6 @@ const App = () => {
             return () => video.removeEventListener('ended', handleEnded);
         }
     }, [currentIndex, activeType]);
-    
-    // Set up canvas when content or page changes
-    React.useEffect(() => {
-        if (isNoteMode && canvasRef.current) {
-            setTimeout(() => {
-                initCanvas();
-                loadPageStrokes();
-            }, 100);
-        }
-        
-        // Set current page to 1 when content changes
-        if (!isNoteMode) {
-            setCurrentPage(1);
-        }
-    }, [currentIndex, activeType, isNoteMode, currentPage]);
-    
-    // Handle window resize for canvas
-    React.useEffect(() => {
-        const handleResize = () => {
-            if (isNoteMode && canvasRef.current) {
-                initCanvas();
-                loadPageStrokes();
-            }
-        };
-        
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, [isNoteMode, savedNotes, currentPage]);
-    
-    // Save notes before unmounting
-    React.useEffect(() => {
-        return () => {
-            if (currentStroke.length > 1) {
-                saveCurrentStroke();
-            }
-            saveNotesToStorage();
-        };
-    }, []);
-    
-    // Load notes from localStorage
-    React.useEffect(() => {
-        try {
-            const savedDrawings = localStorage.getItem('drawing-notes');
-            if (savedDrawings) {
-                setSavedNotes(JSON.parse(savedDrawings));
-            }
-        } catch (error) {
-            console.error('Error loading saved drawings:', error);
-        }
-    }, []);
     
     // Disable context menu on canvas
     React.useEffect(() => {
@@ -652,6 +444,29 @@ const App = () => {
             };
         }
     }, [canvasRef.current]);
+    
+    // Load notes from localStorage
+    React.useEffect(() => {
+        try {
+            const savedDrawings = localStorage.getItem('drawing-notes');
+            if (savedDrawings) {
+                setSavedNotes(JSON.parse(savedDrawings));
+            }
+        } catch (error) {
+            console.error('Error loading saved drawings:', error);
+        }
+    }, []);
+    
+    // Cleanup on unmount
+    React.useEffect(() => {
+        return () => {
+            // Save current drawing before unmounting
+            if (paperInstance.current) {
+                saveCurrentStroke();
+            }
+            saveNotesToStorage();
+        };
+    }, []);
 
     // If no content is available, render a message
     if (!activeType) {
@@ -705,7 +520,7 @@ const App = () => {
     const closeButton = React.createElement('button', {
         onClick: () => {
             // Save notes before navigating away
-            if (isNoteMode && currentStroke.length > 1) {
+            if (isNoteMode && paperInstance.current) {
                 saveCurrentStroke();
             }
             saveNotesToStorage();
@@ -778,7 +593,7 @@ const App = () => {
             onTouchStart: (e) => e.stopPropagation()
         }, React.createElement('i', { className: 'fa fa-eraser' }));
         
-        // Color buttons
+        // Color buttons with fixed event handlers
         const colorButtons = [
             { color: '#000000', title: 'Black' },
             { color: '#ff0000', title: 'Red' },
@@ -788,7 +603,11 @@ const App = () => {
             React.createElement('button', {
                 key: color,
                 className: `color-btn ${strokeColor === color ? 'active' : ''}`,
-                onClick: () => setStrokeColor(color),
+                onClick: (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleColorChange(color);
+                },
                 title: title,
                 style: { backgroundColor: color },
                 onTouchStart: (e) => e.stopPropagation()
@@ -797,7 +616,7 @@ const App = () => {
         
         const colorPicker = React.createElement('div', { className: 'color-picker' }, ...colorButtons);
         
-        // Size buttons
+        // Size buttons with fixed event handlers
         const sizeButtons = [
             { size: 1, className: 'size-thin', title: 'Thin' },
             { size: 3, className: 'size-medium', title: 'Medium' },
@@ -806,7 +625,11 @@ const App = () => {
             React.createElement('button', {
                 key: size,
                 className: `size-btn ${strokeWidth === size ? 'active' : ''}`,
-                onClick: () => setStrokeWidth(size),
+                onClick: (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleWidthChange(size);
+                },
                 title: title,
                 onTouchStart: (e) => e.stopPropagation()
             }, React.createElement('div', { className: `size-indicator ${className}` }))
@@ -844,18 +667,11 @@ const App = () => {
             nextPageButton
         );
         
-        // Drawing canvas
+        // Drawing canvas - no need for mouse/touch event handlers as Paper.js handles these
         const canvas = React.createElement('canvas', {
             ref: canvasRef,
             className: 'drawing-canvas',
-            onMouseDown: startDrawing,
-            onMouseMove: draw,
-            onMouseUp: stopDrawing,
-            onMouseLeave: stopDrawing,
-            onTouchStart: startDrawing,
-            onTouchMove: draw,
-            onTouchEnd: stopDrawing,
-            onTouchCancel: stopDrawing,
+            id: 'drawing-canvas', // Add ID for Paper.js to target
             style: {
                 touchAction: 'none',
                 WebkitUserSelect: 'none',
@@ -980,5 +796,5 @@ document.addEventListener('DOMContentLoaded', () => {
     ReactDOM.createRoot(document.getElementById('root')).render(
         React.createElement(App)
     );
-    console.log('Application initialized');
+    console.log('Application initialized with Paper.js drawing capabilities');
 });
